@@ -1,0 +1,195 @@
+---
+title: "Parallel Computing Project Report" 
+subtitle: "Matrix Multiplication"
+author:
+  - Leonardo Bertani
+  - Rafael Nichel Pearl
+academic-year: "Academic Year 2025/2026"
+bibliography: references.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl
+format:
+  pdf:
+    toc: false
+    documentclass: article
+    number-sections: true
+    colorlinks: true
+    keep-tex: true
+    fontsize: 12pt
+    geometry:
+      - top=2cm
+      - bottom=2cm
+      - left=2.5cm
+      - right=2.5cm
+    header-includes:
+      - \usepackage{array}
+nocite: |
+  @*
+---
+\begin{center}
+  Academic Year 2025/2026
+  \vspace{1em}
+\end{center}
+
+# Introduction
+
+Matrix multiplication is one of the most fundamental operations in linear algebra, used for a wide range of applications, including computer graphics, machine learning, and high-performance scientific simulations.
+
+Given the importance of that operation, several hardware manufacturers have developed specialized co-processors and embedded calculators to execute these matrix routines directly at the hardware level.
+
+However, this report focuses on the software-level implementation and optimization of this workload. We first explore a baseline sequential approach, and then we will try to parallelize that algorithm using MPI.
+
+::: {.callout-note appearance="minimal"}
+Although the general procedure for matrix multiplication is valid for any pair of matrices where the number of columns in matrix $A$ is equal to the number of rows in matrix $B$, this report focuses on square matrices of size $N \times N$. This choice is motivated by structural and algebraic symmetry, which simplifies the theoretical analysis and allows for an optimal, balanced mapping of the computational workload onto the parallel processor topology. 
+:::
+
+# Sequential algorithm
+
+## Problem definition
+
+Given two square matrices $A$ and $B$ of dimension $N \times N$, the goal is to compute their product $C = A \times B$, where $C$ is also an $N \times N$ matrix.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{m{0.68\textwidth} m{0.28\textwidth}}
+The element $C_{ij}$ of the resulting matrix is computed by taking the dot product of the $i$-th row of $A$ and the $j$-th column of $B$. & 
+$C_{ij} = \sum_{k=0}^{N-1} A_{ik} \cdot B_{kj}$
+\end{tabular}
+\end{table}
+
+
+## Algorithm and complexity
+
+In the following figures, we present the sequential algorithm for matrix multiplication in pseudocode and C code. This follows the approach described in the previous section step-by-step.
+
+\begin{center}
+\begin{minipage}[t]{0.46\textwidth}
+\subsubsection*{Pseudocode}
+\begin{small}
+\begin{verbatim}
+Sequential MM(A, B, C, N):
+  Initialize C with all zeros
+  For i = 0 To N - 1:
+    For j = 0 To N - 1:
+      For k = 0 To N - 1:
+        C[i][j] += A[i][k] * B[k][j]
+\end{verbatim}
+\end{small}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\subsubsection*{C Code}
+\begin{small}
+\begin{verbatim}
+void matrix_multiply(double *A, 
+        double *B, double *C, int N) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            C[i][j] = 0.0;
+            for (int k = 0; k < N; k++) {
+                C[i][j] += A[i][k] * B[k][j];
+}}}}
+\end{verbatim}
+\end{small}
+\end{minipage}
+\end{center}
+
+\vspace{0.01\textheight}
+
+As we can see in the code above, the algorithm is composed of three nested loops. The outer two loops iterate over the rows and columns of the resulting matrix $C$. The inner loop iterates through the elements of the $i$-th row of matrix $A$ and the $j$-th column of matrix $B$ simultaneously to compute their dot product, following the standard row-by-column multiplication strategy.
+
+About the time complexity, this algorithm has a time complexity of $\Theta(N^3)$. Then, regarding the space complexity, the algorithm requires $\Theta(N^2)$ auxiliary space to store the input matrices $A$, $B$, and the resulting matrix $C$ in memory.
+
+# Parallel design
+
+Some considerations must be addressed before trying to parallelize the algorithm. In particular, we can analyze the dependency of the algorithm and the communication pattern, to ensure an optimal parallel implementation.
+
+## Dependency analysis
+
+Before parallelizing the algorithm, it is critical to analyze how data flows through the hardware. While mathematically straightforward, the sequential $i\text{-}j\text{-}k$ loop order introduces a significant performance bottleneck due to its asymmetric memory access pattern:
+
+* Matrix $A$ is accessed row-by-row ($A[i][k]$), which perfectly aligns with the row-major storage of C arrays. This benefits from excellent *spatial locality* in the cache.
+* Matrix $B$ is traversed column-by-column ($B[k][j]$). This creates a stride-$N$ access pattern, loading an entire cache line but only using a single element before moving to the next row. As $N$ grows, this triggers a massive rate of *cache misses*.
+
+A dependency analysis reveals a high degree of data parallelism when mapping this workload to multiple execution units. The iterations of the two outer loops (`i` and `j`) are completely independent, since computing any element $C_{ij}$ does not depend on, nor update, any other element of the output matrix $C$. 
+
+From a practical implementation standpoint, this independent structure allows for a straightforward *1D Domain Decomposition*. The algorithm can be parallelized by assigning a contiguous subset of rows of matrix $A$ to each thread or process. Each execution unit can then compute its corresponding rows of matrix $C$ independently.
+
+## Communication pattern
+
+While the 1D decomposition eliminates the need for synchronization in a shared-memory system (e.g., OpenMP) where all threads access a single global RAM, it introduces severe scalability limits in a distributed-memory system (e.g., MPI). In a distributed environment, a 1D approach requires a communication pattern where every single process must replicate and hold the entire matrix $B$ in its private memory, saturating network bandwidth via heavy broadcast operations.
+
+To overcome this network bottleneck, the workload can be restructured into a *2D Domain Decomposition*, creating a logical 2D grid of processes. Under this scheme, each process is responsible for computing only a localized submatrix (block) of $C$, requiring access to just a submatrix of $A$ and a submatrix of $B$. 
+
+However, in a naive 2D parallel implementation, a processor still needs to perform collective communication (broadcasts) across its entire virtual row and column to fetch the required blocks of $A$ and $B$ over time. This communication overhead heavily bounds scalability, driving the need for a fully localized, communication-minimizing topology configuration, such as Cannon's Algorithm.
+
+# Topology-aware implementation
+
+## Topologies considered
+
+In a matrix multiplication algorithm, the computation naturally operates on a fixed geometric space defined by its nested loops. When mapping these loop structures to parallel hardware, closed topologies like the 1D Ring and 2D Torus offer significant code-level and algorithmic advantages over open topologies like the Array or Mesh. 
+
+For instance, closed topologies are perfectly symmetric, meaning every node has the exact same number of neighbors. This structural uniformity allows every processing unit to execute the identical chunk of code without requiring complex conditional statements to handle boundary exceptions. Additionally, physically bridging the boundaries cuts the maximum routing length in half, allowing the system to optimize the direction in which data is sent and drastically reducing latency during the data-shifting phases.
+
+## Embedding the communication pattern
+
+When embedding the logical communication pattern of the matrix multiplication loops onto the hardware, the choice between a 1D Ring and a 2D Torus fundamentally alters how data flows through the network and how the code is structured.
+
+### 1D Ring Embedding
+In a 1D Ring configuration, the multi-dimensional problem must be compressed into a single linear dimension. The matrix is typically divided into horizontal slices (row blocks), and each node communicates only with its two linear neighbors. 
+
+While this topology naturally supports the sequential rotation of one matrix axis, it creates a severe structural bottleneck for the remaining dimensions. Because the hardware lacks a second physical dimension, any data reuse or shifting required by the nested loops along the column axis cannot be localized. Data must either be globally replicated across the entire ring or bounced across multiple intermediate nodes, scaling the communication latency linearly with the number of processors.
+
+### 2D Torus Embedding
+The 2D Torus provides a perfect geometric match for the nested loop structure of matrix multiplication, as it maps the execution directly onto a two-dimensional physical grid of processors. 
+
+By having four physical connections per node with wrap-around links (so the degree is 4 for every node, also on the boundaries), the communication pattern achieves optimal spatial locality in both dimensions simultaneously. The cyclic data shifts required by the outer and inner loops are executed through independent, concurrent paths. Data moves exactly one hop to an immediate neighbor in a single step, preventing network contention. This multi-directional routing eliminates the non-local data traffic inherent to the 1D Ring, keeping the communication overhead constant and ensuring maximum computational efficiency as the processor grid scales.
+
+# MPI implementation
+
+## Language and build
+
+For this project, the C programming language and the MPI library were selected to implement the parallel matrix multiplication algorithm.
+
+Initially, Python was considered as an alternative. However, standard Python is inherently slow for low-level memory operations, while high-level numerical libraries like NumPy abstract away and automatically optimize matrix computations under the hood. Since NumPy handles memory allocation and parallelism internally, it prevents the explicit control and manual implementation of low-level data movement and communication patterns required by this project. Therefore, C was chosen to ensure maximum execution speed, precise memory management, and total control over the MPI communication primitives.
+
+##  Topology realisation in MPI
+
+To implement a topology-aware algorithm like Cannon's, the abstract concept of a 2D Torus must be explicitly declared within the MPI execution environment. 
+
+By default, MPI initializes processes in a flat, linear communicator (MPI_COMM_WORLD), which lacks any geometric awareness. 
+
+The concrete realization of the 2D Torus topology is achieved through three core functional phases in the code:
+1. Grid Creation and Periodicity (`MPI_Cart_create`): 1D $\rightarrow$ 2D of size $\sqrt{P} \times \sqrt{P}$ plus wrap around edges using the periodicity flags (periods = {1, 1})
+2. Automated Neighbor Discovery (`MPI_Cart_shift`): to automate the identification of communication partners, returning the ranks of the neighbors in the specified direction
+3. Deadlock-Free Data Swapping (`MPI_Sendrecv`): combining the outgoing send and incoming receive operations into a single, atomic transaction.
+
+# Experimental setup
+
+# Results
+
+# Discussion
+
+## Limitations
+
+This algorithm strictly requires that the global matrices $A$ and $B$ are square ($N \times N$). Furthermore, for the parallel implementation of Cannon's algorithm, the total number of MPI processes ($P$) must be a perfect square, meaning that the logical grid size $q = \sqrt{P}$ must be an integer. 
+
+A major practical constraint is that the global matrix dimension $N$ must be perfectly divisible by $q$ ($N \pmod q = 0$). 
+
+If these structural conditions are not met, the workload cannot be evenly distributed across the 2D torus topology without implementing complex padding or masking techniques, which would significantly degrade parallel efficiency.
+
+Additionally, as a standard 2D matrix multiplication method, Cannon's algorithm is bound to a strict communication lower bound of $\Omega(N^2 / \sqrt{P})$ words sent or received per processor.
+
+## Possible improvements
+
+We could explore alternative parallelization strategies to reach a more flexible solution in handling non-square matrices or processor grids that are not perfectly square.
+
+Furthermore, communication overhead can be mitigated by upgrading from a 2D topology to a 3D parallel matrix multiplication algorithm. While 2D algorithms like Cannon's are strictly bound by a communication lower bound of $\Omega(N^2 / \sqrt{P})$ words sent or received per processor, 3D approaches replicate matrix data across a three-dimensional processor grid. This technique reduces the total network communication volume per processor to $\Omega(N^2 / P^{2/3})$ , though it does so at the expense of an increased local memory footprint. [@irony2004]
+
+However, the asymptotic reduction in communication achieved by a 3D layout compared to a 2D algorithm like Cannon is limited to a factor of only $P^{1/6}$, meaning that the overhead of data replication may not always be profitable for standard cluster sizes. [@irony2004]
+
+To bridge this gap, a 2.5D variant can be introduced [@solomonik2011]. This method incorporates a tunable replication factor that dynamically scales according to the available RAM to reach optimal, communication-avoiding bounds. Additionally, adapting these advanced mapping strategies to higher-dimensional physical interconnects, such as hypercube network topologies [@berntsen1989], can further minimize routing latency and maximize bandwidth, yielding massive speedups on thousands of processing cores.
+
+# Conclusions
+
+
+# References

@@ -5,13 +5,12 @@
 #include <string.h>
 
 /**
- * Rileva la dimensione N di una matrice quadrata contando gli elementi nella
- * prima riga.
+ * Detects the size N of a square matrix by counting elements in the first row.
  */
 int detect_matrix_size(const char *filename) {
   FILE *f = fopen(filename, "r");
   if (!f) {
-    perror("Impossibile aprire il file per calcolare N");
+    perror("Unable to open file to calculate N");
     exit(1);
   }
 
@@ -36,19 +35,19 @@ int detect_matrix_size(const char *filename) {
 }
 
 /**
- * Carica una matrice quadrata NxN da un file di testo.
+ * Loads a square matrix NxN from a text file.
  */
 double *load_matrix(const char *filename, int N) {
   FILE *f = fopen(filename, "r");
   if (!f) {
-    perror("Impossibile aprire il file di input");
+    perror("Unable to open input file");
     exit(1);
   }
 
   double *matrix = (double *)malloc(N * N * sizeof(double));
   for (int i = 0; i < N * N; i++) {
     if (fscanf(f, "%lf", &matrix[i]) != 1) {
-      fprintf(stderr, "Errore di lettura nel file %s\n", filename);
+      fprintf(stderr, "Read error in file %s\n", filename);
       exit(1);
     }
   }
@@ -56,7 +55,7 @@ double *load_matrix(const char *filename, int N) {
   return matrix;
 }
 
-// Moltiplicazione locale dei sottomatrici
+// Local multiplication of submatrices
 void local_matrix_multiply(double *A, double *B, double *C, int size) {
   for (int i = 0; i < size; i++) {
     for (int j = 0; j < size; j++) {
@@ -79,7 +78,7 @@ int main(int argc, char **argv) {
   if (sqrt_P * sqrt_P != num_procs) {
     if (rank == 0)
       printf(
-          "Errore: Il numero di processi deve essere un quadrato perfetto.\n");
+          "Error: The number of processes must be a perfect square.\n");
     MPI_Finalize();
     return 1;
   }
@@ -88,11 +87,11 @@ int main(int argc, char **argv) {
   double *global_B = NULL;
   double *global_C = NULL;
 
-  // 1. LETTURA FILE (Solo Processo 0)
+  // 1. FILE READING (Process 0 only)
   if (rank == 0) {
     global_N = detect_matrix_size("matrix_A.txt");
     if (global_N <= 0) {
-      fprintf(stderr, "Errore: Dimensione non valida (%d).\n", global_N);
+      fprintf(stderr, "Error: Invalid dimension (%d).\n", global_N);
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
     global_A = load_matrix("matrix_A.txt", global_N);
@@ -100,12 +99,12 @@ int main(int argc, char **argv) {
     global_C = (double *)calloc(global_N * global_N, sizeof(double));
   }
 
-  // Broadcast dimensione
+  // Broadcast dimension
   MPI_Bcast(&global_N, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (global_N % sqrt_P != 0) {
     if (rank == 0)
-      printf("Errore: N (%d) deve essere divisibile per sqrt_P (%d)\n",
+      printf("Error: N (%d) must be divisible by sqrt_P (%d)\n",
              global_N, sqrt_P);
     if (rank == 0) {
       free(global_A);
@@ -125,7 +124,7 @@ int main(int argc, char **argv) {
   double *buf_A = (double *)malloc(block_size * sizeof(double));
   double *buf_B = (double *)malloc(block_size * sizeof(double));
 
-  // 2. DISTRIBUZIONE DEI DATI
+  // 2. DATA DISTRIBUTION
   if (rank == 0) {
     for (int p = 0; p < num_procs; p++) {
       int p_row = p / sqrt_P;
@@ -165,11 +164,11 @@ int main(int argc, char **argv) {
   MPI_Barrier(MPI_COMM_WORLD);
   double start_time = MPI_Wtime();
 
-  // 3. TOPOLOGIA CARTESIANA
+  // 3. CARTESIAN TOPOLOGY
   int dims[2] = {sqrt_P, sqrt_P};
   int periods[2] = {1, 1};
   MPI_Comm cart_comm;
-  // REORDER = 0 è fondamentale per non rompere la mappatura del nostro Scatter
+  // REORDER = 0 is fundamental to not break our Scatter mapping
   MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &cart_comm);
 
   int cart_rank;
@@ -184,7 +183,7 @@ int main(int argc, char **argv) {
   MPI_Cart_shift(cart_comm, 1, 1, &left, &right);
   MPI_Cart_shift(cart_comm, 0, 1, &up, &down);
 
-  // 4. SKEWING INIZIALE (con controlli per evitare self-sending letali)
+  // 4. INITIAL SKEWING (with checks to avoid lethal self-sending)
   if (my_row > 0) {
     int init_left, init_right;
     MPI_Cart_shift(cart_comm, 1, my_row, &init_left, &init_right);
@@ -202,11 +201,11 @@ int main(int argc, char **argv) {
     memcpy(local_B, buf_B, block_size * sizeof(double));
   }
 
-  // 5. LOOP DI CANNON
+  // 5. CANNON'S LOOP
   for (int step = 0; step < sqrt_P; step++) {
     local_matrix_multiply(local_A, local_B, local_C, block_N);
 
-    // Shift circolare (A sinistra, B in alto)
+    // Circular shift (A left, B up)
     MPI_Sendrecv(local_A, block_size, MPI_DOUBLE, left, 0, buf_A, block_size,
                  MPI_DOUBLE, right, 0, cart_comm, MPI_STATUS_IGNORE);
     memcpy(local_A, buf_A, block_size * sizeof(double));
@@ -220,7 +219,7 @@ int main(int argc, char **argv) {
   double end_time = MPI_Wtime();
   double total_time = end_time - start_time;
 
-  // 6. RACCOLTA RISULTATI
+  // 6. COLLECT RESULTS
   if (rank == 0) {
     for (int p = 0; p < num_procs; p++) {
       int p_row = p / sqrt_P;
@@ -255,8 +254,7 @@ int main(int argc, char **argv) {
       for (int i = 0; i < global_N; i++) {
         for (int j = 0; j < global_N; j++) {
           fprintf(f_matrix, "%f ",
-                  global_C[i * global_N +
-                           j]); // Arrotondato a 2 decimali per leggibilità
+                  global_C[i * global_N + j]);
         }
         fprintf(f_matrix, "\n");
       }

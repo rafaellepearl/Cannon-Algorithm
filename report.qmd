@@ -3,7 +3,7 @@ title: "Parallel Computing Project Report"
 subtitle: "Matrix Multiplication"
 author:
   - Leonardo Bertani
-  - Rafael Nichel Pearl
+  - Rafaelle Richel Pearl
 academic-year: "Academic Year 2025/2026"
 bibliography: references.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl

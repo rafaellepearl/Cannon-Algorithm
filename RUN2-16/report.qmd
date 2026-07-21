@@ -152,114 +152,73 @@ For this project, the C programming language and the MPI library were selected t
 
 Initially, Python was considered as an alternative. However, standard Python is inherently slow for low-level memory operations, while high-level numerical libraries like NumPy abstract away and automatically optimize matrix computations under the hood. Since NumPy handles memory allocation and parallelism internally, it prevents the explicit control and manual implementation of low-level data movement and communication patterns required by this project. Therefore, C was chosen to ensure maximum execution speed, precise memory management, and total control over the MPI communication primitives.
 
-## Topology realisation in MPI
+##  Topology realisation in MPI
 
-To implement a topology-aware algorithm like Cannon's, the abstract concept of a 2D Torus must be explicitly instantiated within the MPI execution environment.
+To implement a topology-aware algorithm like Cannon's, the abstract concept of a 2D Torus must be explicitly declared within the MPI execution environment. 
 
-By default, MPI initializes processes in a flat, unstructured communicator (`MPI_COMM_WORLD`), which provides no notion of geometric proximity or neighborhood. To expose this structure to the runtime, three MPI primitives are composed in sequence:
+By default, MPI initializes processes in a flat, linear communicator (MPI_COMM_WORLD), which lacks any geometric awareness. 
 
-1. **Grid Creation and Periodicity** (`MPI_Cart_create`): restructures the flat process list into a logical 2D grid of size $\sqrt{P} \times \sqrt{P}$. Setting the periodicity flags to `{1, 1}` closes both dimensions into a torus, ensuring that every process has exactly four neighbors with no boundary exceptions.
-
-2. **Neighbor Discovery** (`MPI_Cart_shift`): resolves the MPI ranks of the four cardinal neighbors (left, right, up, down) for each process. These are computed once prior to the main loop and reused across both the skewing phase and the iterative Cannon shifts, avoiding repeated rank lookups at runtime.
-
-3. **Deadlock-Free Data Exchange** (`MPI_Sendrecv`): encapsulates the outgoing send and incoming receive into a single atomic operation. This is critical in a ring-shift pattern where every process simultaneously sends and receives — using separate `MPI_Send` and `MPI_Recv` calls would cause all processes to block indefinitely waiting for a listener.
-
-### Initial skewing
-
-Before the main calculation starts, Cannon's algorithm uses a setup step to align the data: row $i$ of matrix $A$ shifts left by $i$ positions, and column $j$ of matrix $B$ shifts up by $j$ positions. At first, we tried to move this data all at once using a single MPI_Cart_shift command. This worked for small processor grids ($P \le 9$), but caused incorrect math results on larger grids ($P \ge 16$). The issue was that sending the data in one big jump skipped over the processors in between, which broke the 2D network layout. We fixed this by moving the data one step at a time to direct neighbors. This passed the blocks correctly through the network and produced the exact same results as the standard sequential version.
+The concrete realization of the 2D Torus topology is achieved through three core functional phases in the code:
+1. Grid Creation and Periodicity (`MPI_Cart_create`): 1D $\rightarrow$ 2D of size $\sqrt{P} \times \sqrt{P}$ plus wrap around edges using the periodicity flags (periods = {1, 1})
+2. Automated Neighbor Discovery (`MPI_Cart_shift`): to automate the identification of communication partners, returning the ranks of the neighbors in the specified direction
+3. Deadlock-Free Data Swapping (`MPI_Sendrecv`): combining the outgoing send and incoming receive operations into a single, atomic transaction.
 
 # Experimental setup
 
-To evaluate the correctness, speedup, and overall scalability of the MPI implementation of Cannon's Algorithm, benchmarks were conducted across two distinct hardware environments. This dual-setup approach allowed for local validation of smaller processor grids before deploying the algorithm for massive parallelization.
-
-## Local Computing Environment
-Initial development were established on a local Linux Ubuntu workstation (Intel Core i7 12th Gen, 32 GB RAM). This environment was also utilized to validate the parallel algorithm on smaller grids ($P=4$ and $P=9$).
-
-## High-Performance Computing Environment (CAPRI)
-
-Large-scale benchmarking was executed on the University of Padua's CAPRI HPC infrastructure. CAPRI features a Cache-Coherent NUMA architecture with 16 CPUs (256 physical cores) and 6 TB of globally shared RAM, connected via an HPE proprietary Intel UPI central hub. Tests were compiled with OpenMPI and managed via SLURM, evaluating grids up to 8x8 (64 processors) and matrix sizes up to 5000x5000.
-
 # Results
 
-## Execution Time and Speedup
+## Execution time
 
-Table 1 shows the local machine results for both process counts side by side, and Table
-2 combines all three CAPRI configurations ($P = 4$, $P = 16$, $P = 25$).
+The tables below present the execution times (in seconds) for sequential multiplication, parallel multiplication using Cannon's algorithm, and the resulting speedup ($S = T_{seq} / T_{par}$). Table 1 displays the results for 4 processors ($P = 4$), while Table 2 displays the results for 9 processors ($P = 9$).
 
-For $P = 9$, $N$ must be divisible by 3; for $P = 25$, divisible by 5. This is why
-these configurations use different $N$ values, and why neither sub-table in Table 1
-shares rows. For $P = 25$, the $N = 4$ case failed at runtime and is excluded (—).
-
-\begin{table}[h!]
+\begin{table}[h]
 \centering
-\caption{Local machine results: $P = 4$ ($2\times2$) and $P = 9$ ($3\times3$)}
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\caption{Performance on 4 Processors ($P = 4$)}
 \begin{small}
-\begin{tabular}{|r|r|r|r|r|r|r|r|}
+\begin{tabular}{|r|r|r|r|}
 \hline
-\multicolumn{4}{|c|}{\textbf{$P = 4$}} & \multicolumn{4}{c|}{\textbf{$P = 9$}} \\
-\hline
-\textbf{N} & \textbf{Seq (s)} & \textbf{Par (s)} & \textbf{Speedup} &
 \textbf{N} & \textbf{Seq (s)} & \textbf{Par (s)} & \textbf{Speedup} \\ \hline
-4    & 0.000001   & 0.000251   & 0.00 & 255  & 0.056660   & 0.013643  & 4.15 \\ \hline
-200  & 0.016312   & 0.007559   & 2.16 & 510  & 1.096061   & 0.578107  & 1.90 \\ \hline
-500  & 0.327045   & 0.116566   & 2.81 & 765  & 7.727348   & 1.833078  & 4.22 \\ \hline
-800  & 1.530781   & 0.562793   & 2.72 & 1020 & 11.789010  & 4.048152  & 2.91 \\ \hline
-1000 & 3.486282   & 1.121739   & 3.11 & 2040 & 35.915316  & 7.229086  & 4.97 \\ \hline
-2000 & 32.714191  & 10.522947  & 3.11 & 3072 & 349.357671 & 90.501574 & 3.86 \\ \hline
-4000 & 394.880910 & 126.129741 & 3.13 & 4095 & 676.634829 & 94.353462 & 7.17 \\ \hline
+200 & 0.016312 & 0.007559 & 2.158 \\ \hline
+500 & 0.327045 & 0.116566 & 2.806 \\ \hline
+800 & 1.530781 & 0.562793 & 2.720 \\ \hline
+1000 & 3.486282 & 1.121739 & 3.108 \\ \hline
+2000 & 32.714191 & 10.522947 & 3.109 \\ \hline
+4000 & 394.880910 & 126.129741 & 3.131 \\ \hline
+5000 & 673.567883 & 307.236946 & 2.192 \\ \hline
+8000 & 6612.029966 & 1918.046777 & 3.447 \\ \hline
 \end{tabular}
 \end{small}
-\end{table}
-
-
-\begin{table}[h!]
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.49\textwidth}
 \centering
-\caption{CAPRI results: $P = 4$ ($2\times2$) and $P = 16$ ($4\times4$)}
+\caption{Performance on 9 Processors ($P = 9$)}
 \begin{small}
-\begin{tabular}{|r|r|r|r|r|r|r|r|}
+\begin{tabular}{|r|r|r|r|}
 \hline
- & & \multicolumn{3}{c|}{\textbf{$P = 4$}} &
-     \multicolumn{3}{c|}{\textbf{$P = 16$}} \\
-\hline
-\textbf{N} & \textbf{Seq (s)} &
-  \textbf{Par (s)} & \textbf{Speedup} & \textbf{Compute\%} &
-  \textbf{Par (s)} & \textbf{Speedup} & \textbf{Compute\%} \\ \hline
-4    & 0.000001    & 0.000608   & 0.00 & 0.07\%  & 0.169457  & 0.00  & 0.00\%  \\ \hline
-200  & $\sim$0.042 & 0.207911   & 0.20 & 4.62\%  & 0.427988  & 0.10  & 0.55\%  \\ \hline
-500  & $\sim$0.867 & 0.173822   & 4.88 & 96.02\% & 0.475445  & 1.83  & 8.03\%  \\ \hline
-800  & $\sim$3.323 & 0.857277   & 3.78 & 98.73\% & 0.699960  & 5.00  & 23.49\% \\ \hline
-1000 & $\sim$6.206 & 1.756798   & 3.37 & 98.86\% & 1.079994  & 6.28  & 31.34\% \\ \hline
-2000 & $\sim$67.6  & 17.375455  & 4.28 & 99.67\% & 9.490967  & 7.33  & 38.47\% \\ \hline
-4000 & $\sim$1036  & 141.643071 & 5.86 & 98.11\% & 62.854408 & 13.36 & 52.84\% \\ \hline
+\textbf{N} & \textbf{Seq (s)} & \textbf{Par (s)} & \textbf{Speedup} \\ \hline
+255 & 0.056660 & 0.013643 & 4.153 \\ \hline
+510 & 1.096061 & 0.578107 & 1.896 \\ \hline
+765 & 7.727348 & 1.833078 & 4.215 \\ \hline
+1020 & 11.789010 & 4.048152 & 2.912 \\ \hline
+2040 & 35.915316 & 7.229086 & 4.968 \\ \hline
+3072 & 349.357671 & 90.501574 & 3.860 \\ \hline
+4095 & 676.634829 & 94.353462 & 7.171 \\ \hline
+6144 & 3558.526547 & 1397.929019 & 2.546 \\ \hline
 \end{tabular}
 \end{small}
+\end{minipage}
 \end{table}
 
-\begin{table}[h!]
-\centering
-\caption{CAPRI results: $P = 25$ ($5\times5$)}
-\begin{small}
-\begin{tabular}{|r|r|r|r|r|}
-\hline
-\textbf{N} & \textbf{Seq (s)} & \textbf{Par (s)} & \textbf{Speedup} & \textbf{Compute\%} \\ \hline
-4    & —           & —          & —     & —       \\ \hline
-200  & 0.042013    & 0.439988   & 0.10  & 0.35\%  \\ \hline
-500  & 0.883308    & 0.568006   & 1.56  & 5.20\%  \\ \hline
-800  & 3.221853    & 0.660117   & 4.88  & 16.30\% \\ \hline
-1000 & 5.914401    & 0.592395   & 9.98  & 34.67\% \\ \hline
-2000 & 59.039703   & 4.950587   & 11.93 & 41.39\% \\ \hline
-4000 & 1538.387289 & 44.661665  & 34.45 & 47.07\% \\ \hline
-\end{tabular}
-\end{small}
-\end{table}
+## Speedup and eﬃciency
 
-## Speedup and Efficiency
+## Comparison across topologies
 
-For small matrices ($N \leq 200$), the parallel implementation underperformed the sequential baseline across all topologies due to MPI initialization and communication overhead. As computational volume scaled, the parallel efficiency rapidly improved. At $N=4000$, the $P=25$ configuration achieved a remarkable 34.4x speedup (44.66s vs 1036s). This superlinear speedup is heavily attributed to cache effects: distributing the workload across 25 nodes reduced the block sizes to easily fit within the L1/L2 caches of the individual processors, eliminating the cache-miss bottleneck observed in the sequential baseline.
+## Computation vs. communication
 
-## Computation vs. Communication
-
-The data highlights a strict tradeoff. At $P=4$, computation dominates (>98\% time for $N>500$). However, for larger grids like $P=25$, communication overhead accounts for over 50\% of the total time until $N$ scales massively, proving that adding processors requires exponentially larger datasets to remain efficient.
+## Scalability
 
 
 # Discussion
@@ -286,18 +245,5 @@ To bridge this gap, a 2.5D variant can be introduced [@solomonik2011]. This meth
 
 # Conclusions
 
-This project implemented and validated Cannon's algorithm for parallel matrix
-multiplication on a 2D Torus topology using MPI, confirming both its correctness and its
-ability to deliver significant speedups over a sequential baseline on large matrices.
-The results show a clear pattern: for small matrices, communication overhead dominates
-and parallelism makes things slower, while for large matrices computation takes over and
-more processes consistently wins. The 2D Torus proved to be a natural fit for the
-algorithm's communication pattern, and the gap in speedup between smaller and larger
-process grids at large $N$ suggests that scaling further would continue to be
-worthwhile.
-
-# Acknowledgments
-
-The computational results presented in this report were achieved using the CAPRI computing infrastructure. We gratefully acknowledge the resources provided by the University of Padova Strategic Research Infrastructure Grant 2017: “CAPRI: Calcolo ad Alte Prestazioni per la Ricerca e l’Innovazione”.
 
 # References

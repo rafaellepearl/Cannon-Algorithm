@@ -1,0 +1,210 @@
+==================================================
+N = 4
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 4x4
+Created file matrix_B.txt with size 4x4
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.000001 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 4
+Processes (P)   : 4
+Total Time      : 0.000608 sec
+Compute Time    : 0.000000 sec (0.07%)
+Comm Time       : 0.000065 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 200
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 200x200
+Created file matrix_B.txt with size 200x200
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.041821 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 200
+Processes (P)   : 4
+Total Time      : 0.207911 sec
+Compute Time    : 0.009596 sec (4.62%)
+Comm Time       : 0.092273 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 500
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 500x500
+Created file matrix_B.txt with size 500x500
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.847394 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 500
+Processes (P)   : 4
+Total Time      : 0.173822 sec
+Compute Time    : 0.166911 sec (96.02%)
+Comm Time       : 0.006258 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 800
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 800x800
+Created file matrix_B.txt with size 800x800
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 3.244673 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 800
+Processes (P)   : 4
+Total Time      : 0.857277 sec
+Compute Time    : 0.846405 sec (98.73%)
+Comm Time       : 0.009837 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 1000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 1000x1000
+Created file matrix_B.txt with size 1000x1000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 5.917660 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 1000
+Processes (P)   : 4
+Total Time      : 1.756798 sec
+Compute Time    : 1.736778 sec (98.86%)
+Comm Time       : 0.019279 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 2000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 2000x2000
+Created file matrix_B.txt with size 2000x2000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 74.292520 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 2000
+Processes (P)   : 4
+Total Time      : 17.375455 sec
+Compute Time    : 17.318503 sec (99.67%)
+Comm Time       : 0.056201 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 4000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 4000x4000
+Created file matrix_B.txt with size 4000x4000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 829.865392 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 4000
+Processes (P)   : 4
+Total Time      : 141.643071 sec
+Compute Time    : 138.967076 sec (98.11%)
+Comm Time       : 2.654589 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+

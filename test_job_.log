@@ -1,0 +1,62 @@
+==================================================
+N = 4
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 4x4
+Created file matrix_B.txt with size 4x4
+[2/4] Running sequential algorithm...
+Execution time: 0.000003 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 4
+Processes (P)   : 4
+Total Time      : 0.004422 sec
+Compute Time    : 0.000001 sec (0.03%)
+Comm Time       : 0.000029 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 200
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 200x200
+Created file matrix_B.txt with size 200x200
+[2/4] Running sequential algorithm...
+Execution time: 0.085704 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+[3/4] Running parallel algorithm (MPI -n 4)...
+--- BENCHMARK RESULTS ---
+Matrix Size (N) : 200
+Processes (P)   : 4
+Total Time      : 0.031135 sec
+Compute Time    : 0.027914 sec (89.66%)
+Comm Time       : 0.002424 sec
+-------------------------
+Time saved to time_parallel.txt
+Metrics appended to benchmark_results.csv
+Matrix C successfully saved to mul_parallel.txt
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+✅ SUCCESS: The matrices are mathematically identical!
+
+
+==================================================
+N = 500
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 500x500
+Created file matrix_B.txt with size 500x500
+[2/4] Running sequential algorithm...

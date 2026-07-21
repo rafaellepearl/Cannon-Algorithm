@@ -1,0 +1,224 @@
+==================================================
+N = 4
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 4x4
+Created file matrix_B.txt with size 4x4
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.000001 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (4) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[48210,1],7]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 200
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 200x200
+Created file matrix_B.txt with size 200x200
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.041719 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (200) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[48512,1],8]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 500
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 500x500
+Created file matrix_B.txt with size 500x500
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 0.853182 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (500) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[48431,1],4]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 800
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 800x800
+Created file matrix_B.txt with size 800x800
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 3.249437 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (800) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[47857,1],7]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 1000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 1000x1000
+Created file matrix_B.txt with size 1000x1000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 6.034711 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (1000) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[48092,1],8]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 2000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 2000x2000
+Created file matrix_B.txt with size 2000x2000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 70.678158 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (2000) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[50474,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
+==================================================
+N = 4000
+==================================================
+
+[1/4] Generating matrices...
+Created file matrix_A.txt with size 4000x4000
+Created file matrix_B.txt with size 4000x4000
+--------------------------------------------------
+[2/4] Running sequential algorithm...
+Execution time: 1251.500076 seconds
+Time saved to time_sequential.txt
+Matrix C successfully saved to mul_sequential.txt
+--------------------------------------------------
+[3/4] Running parallel algorithm (MPI -n 9)...
+Error: N (4000) must be divisible by grid_size (3)
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[8057,1],4]
+  Exit code:    1
+--------------------------------------------------------------------------
+------------------------------------------------------------
+[4/4] Verifying result correctness...
+Comparing mul_sequential.txt and mul_parallel.txt...
+❌ Error: Could not find one of the files. Details: [Errno 2] No such file or directory: 'mul_parallel.txt'
+
+
